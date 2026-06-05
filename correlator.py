@@ -1,7 +1,7 @@
 """
 Correlator: match a news story to the BEST ad niche, then write ad copy.
 
-Two guards against hallucinated connections (your hard requirement):
+Two guards against hallucinated connections:
 
   1. LEXICAL GATE (deterministic, no LLM): score the story against each niche's
      keyword set. Pick the best niche ONLY if its relevance clears

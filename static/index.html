@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adfluence — Viral News → Ads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0a0b0f; --panel:#12141c; --panel-2:#171a24; --line:#242838;
+    --ink:#eef0f6; --ink-dim:#9aa0b4; --ink-faint:#5b6075;
+    --accent:#ff5d3b; --good:#3be0a0;
+    --serif:'Fraunces',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--mono)}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(255,93,59,.10), transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, rgba(59,224,160,.06), transparent 55%),
+      var(--bg);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.04;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1}
+
+  /* ---- header ---- */
+  header{padding:40px 0 28px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .brand h1{
+    font-family:var(--serif);font-weight:900;font-size:clamp(34px,6vw,56px);
+    letter-spacing:-.02em;line-height:.95;
+    background:linear-gradient(180deg,#fff,#c7ccdc);-webkit-background-clip:text;
+    background-clip:text;color:transparent;
+  }
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 14px var(--accent);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .tag{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink-dim)}
+  .sub{margin-top:10px;color:var(--ink-dim);font-size:13px;max-width:62ch;line-height:1.6}
+
+  /* ---- status strip ---- */
+  .status{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    margin-top:22px;padding:14px 16px;border:1px solid var(--line);
+    border-radius:12px;background:linear-gradient(180deg,var(--panel),#0e1016)}
+  .stat{display:flex;flex-direction:column;gap:3px;padding-right:18px;border-right:1px solid var(--line)}
+  .stat:last-of-type{border-right:none}
+  .stat .k{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint)}
+  .stat .v{font-size:13px;color:var(--ink)}
+  .pill{font-size:10px;padding:3px 9px;border-radius:99px;letter-spacing:.12em;text-transform:uppercase}
+  .pill.on{background:rgba(59,224,160,.12);color:var(--good);border:1px solid rgba(59,224,160,.3)}
+  .pill.off{background:rgba(255,93,59,.10);color:var(--accent);border:1px solid rgba(255,93,59,.3)}
+  .spacer{flex:1}
+  button.refresh{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:#0a0b0f;background:var(--ink);border:none;padding:11px 18px;border-radius:9px;
+    cursor:pointer;font-weight:600;transition:.2s;white-space:nowrap}
+  button.refresh:hover{background:#fff;transform:translateY(-1px)}
+  button.refresh:disabled{opacity:.5;cursor:wait}
+
+  /* ---- cards ---- */
+  .grid{margin-top:30px;display:flex;flex-direction:column;gap:18px}
+  .card{
+    position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),#0d0f15);
+    opacity:0;transform:translateY(14px);animation:rise .6s forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .heatbar{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .card-in{display:grid;grid-template-columns:64px 1fr;gap:18px;padding:22px 24px 22px 22px}
+  .rank{font-family:var(--serif);font-weight:900;font-size:46px;line-height:1;color:var(--ink-faint)}
+  .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--ink-dim)}
+  .meta .src{color:var(--ink);font-weight:500}
+  .headline{font-family:var(--serif);font-size:clamp(19px,2.4vw,25px);line-height:1.22;
+    margin:9px 0 14px;letter-spacing:-.01em}
+  .headline a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent}
+  .headline a:hover{border-color:var(--ink-faint)}
+
+  /* virality block */
+  .vir{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .score{display:flex;align-items:baseline;gap:7px}
+  .score .num{font-family:var(--serif);font-weight:900;font-size:34px;line-height:1}
+  .score .lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+  .track{flex:1;min-width:160px;height:8px;border-radius:99px;background:#0a0c12;
+    border:1px solid var(--line);overflow:hidden;position:relative}
+  .fill{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+  .toggle{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);
+    cursor:pointer;background:none;border:1px solid var(--line);padding:6px 10px;border-radius:7px;font-family:var(--mono)}
+  .toggle:hover{color:var(--ink);border-color:var(--ink-faint)}
+
+  /* breakdown */
+  .parts{max-height:0;overflow:hidden;transition:max-height .4s ease;margin-top:0}
+  .parts.open{max-height:320px;margin-top:16px}
+  .parts-in{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+    padding:14px;border:1px dashed var(--line);border-radius:10px;background:#0b0d13}
+  .part .pk{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+  .part .pbar{height:5px;border-radius:99px;background:#14171f;overflow:hidden}
+  .part .pf{height:100%;background:linear-gradient(90deg,#3b6bff,#3be0a0);width:0;transition:width .8s}
+  .part .pv{font-size:11px;color:var(--ink-dim);margin-top:4px}
+
+  /* ad panel */
+  .ad{margin-top:18px;border-radius:12px;border:1px solid var(--line);overflow:hidden}
+  .ad-h{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel-2);
+    border-bottom:1px solid var(--line)}
+  .badge{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:99px;
+    background:rgba(255,93,59,.12);color:var(--accent);border:1px solid rgba(255,93,59,.28)}
+  .ad-h .rel{font-size:10px;color:var(--ink-faint);letter-spacing:.1em}
+  .ad-body{padding:16px 16px}
+  .ad-body .ah{font-family:var(--serif);font-weight:600;font-size:18px;color:#fff;margin-bottom:6px}
+  .ad-body .ad-desc{font-size:13px;color:var(--ink-dim);line-height:1.55}
+  .ad-body .why{margin-top:11px;font-size:11px;color:var(--ink-faint);border-top:1px dashed var(--line);
+    padding-top:9px;line-height:1.5}
+  .nomatch{margin-top:18px;padding:14px 16px;border:1px dashed var(--line);border-radius:12px;
+    font-size:12px;color:var(--ink-faint);line-height:1.5;background:#0b0d13}
+  .nomatch b{color:var(--ink-dim);font-weight:500}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--ink-dim)}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+    border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  footer{margin-top:40px;text-align:center;font-size:10.5px;color:var(--ink-faint);letter-spacing:.08em;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>Adfluence</h1>
+      <span class="tag">virality desk · US</span>
+    </div>
+    <p class="sub">Live news scored for virality, then matched to a home-services / home-finance ad niche — with grounded copy. Connections are only drawn when the keywords genuinely support them; nothing is invented.</p>
+
+    <div class="status" id="status">
+      <div class="stat"><span class="k">Last sync</span><span class="v" id="s-last">—</span></div>
+      <div class="stat"><span class="k">Next sync</span><span class="v" id="s-next">—</span></div>
+      <div class="stat"><span class="k">Cadence</span><span class="v" id="s-cadence">—</span></div>
+      <div class="stat"><span class="k">Stored</span><span class="v" id="s-stored">—</span></div>
+      <div class="stat"><span class="k">Ad engine</span><span class="v" id="s-gem">—</span></div>
+      <div class="spacer"></div>
+      <button class="refresh" id="btn">Sync now</button>
+    </div>
+  </header>
+
+  <div class="grid" id="grid">
+    <div class="empty"><span class="spin"></span> loading the desk…</div>
+  </div>
+
+  <footer>
+    ADFLUENCE· heuristic virality + grounded niche matching<br/>
+    free stack — google news rss · sqlite · gemini free tier
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+// cool -> hot heat color for a 0..100 score
+function heat(v){
+  const stops = [[20,'#3b6bff'],[40,'#22b8d9'],[55,'#3be0a0'],[70,'#f4c64b'],[82,'#ff8a3b'],[100,'#ff3b3b']];
+  for(const [t,c] of stops){ if(v<=t) return c; }
+  return '#ff2d2d';
+}
+function fmtTime(iso){
+  if(!iso) return '—';
+  const d = new Date(iso); if(isNaN(d)) return '—';
+  return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function ago(iso){
+  if(!iso) return '';
+  const m = Math.round((Date.now()-new Date(iso))/60000);
+  if(m<1) return 'just now'; if(m<60) return m+'m ago';
+  const h=Math.round(m/60); return h<24? h+'h ago' : Math.round(h/24)+'d ago';
+}
+
+async function loadStatus(){
+  try{
+    const s = await (await fetch('/api/status')).json();
+    const lr = s.last_run||{};
+    $('#s-last').textContent = lr.finished_at? ago(lr.finished_at) : (lr.status||'—');
+    $('#s-next').textContent = fmtTime(s.next_run);
+    $('#s-cadence').textContent = 'every '+s.refresh_hours+'h';
+    $('#s-stored').textContent = (s.total_articles_stored||0)+' articles';
+    const g = $('#s-gem');
+    g.innerHTML = s.gemini_enabled
+      ? '<span class="pill on">Gemini · '+(s.gemini_model||'on')+'</span>'
+      : '<span class="pill off">template (no key)</span>';
+  }catch(e){ /* leave dashes */ }
+}
+
+function partLabels(k){
+  return {topic_heat:'Topic heat',recency:'Recency',sentiment:'Sentiment',
+          triggers:'Headline triggers',source_reach:'Source reach'}[k]||k;
+}
+
+function card(a, i){
+  const c = heat(a.virality_score);
+  const parts = a.virality_parts||{};
+  const partsHtml = Object.keys(parts).map(k=>`
+    <div class="part">
+      <div class="pk">${partLabels(k)}</div>
+      <div class="pbar"><div class="pf" style="width:${(parts[k]*100).toFixed(0)}%"></div></div>
+      <div class="pv">${(parts[k]).toFixed(2)}</div>
+    </div>`).join('');
+
+  let adHtml;
+  if(a.niche && a.ad_relevant){
+    adHtml = `
+      <div class="ad" style="border-color:${c}33">
+        <div class="ad-h">
+          <span class="badge">${a.niche_label}</span>
+          <span class="rel">relevance ${(a.niche_relevance).toFixed(2)}</span>
+        </div>
+        <div class="ad-body">
+          <div class="ah">${esc(a.ad_headline||'')}</div>
+          <div class="ad-desc">${esc(a.ad_description||'')}</div>
+          ${a.ad_reason? `<div class="why">why this fits: ${esc(a.ad_reason)}</div>`:''}
+        </div>
+      </div>`;
+  } else {
+    adHtml = `<div class="nomatch"><b>No grounded niche match.</b> This story didn't clear the relevance bar for any ad niche, so no headline was generated — the connection would have been fabricated.</div>`;
+  }
+
+  return `
+  <article class="card" style="animation-delay:${i*0.08}s">
+    <div class="heatbar" style="background:${c};box-shadow:0 0 18px ${c}aa"></div>
+    <div class="card-in">
+      <div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="meta"><span class="src">${esc(a.source||'Unknown')}</span><span>·</span><span>${ago(a.published)}</span></div>
+        <h2 class="headline"><a href="${a.url}" target="_blank" rel="noopener">${esc(a.title||'')}</a></h2>
+        <div class="vir">
+          <div class="score"><span class="num" style="color:${c}">${a.virality_score.toFixed(0)}</span><span class="lab">virality</span></div>
+          <div class="track"><div class="fill" style="background:linear-gradient(90deg,#3b6bff,${c})" data-w="${a.virality_score}"></div></div>
+          <button class="toggle" onclick="this.closest('.card').querySelector('.parts').classList.toggle('open')">why?</button>
+        </div>
+        <div class="parts"><div class="parts-in">${partsHtml}</div></div>
+        ${adHtml}
+      </div>
+    </div>
+  </article>`;
+}
+
+function esc(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+async function loadNews(){
+  try{
+    const d = await (await fetch('/api/top-news')).json();
+    const grid = $('#grid');
+    if(!d.top || !d.top.length){
+      grid.innerHTML = `<div class="empty"><span class="spin"></span> First sync in progress — fetching & scoring live news…</div>`;
+      return false;
+    }
+    grid.innerHTML = d.top.map(card).join('');
+    requestAnimationFrame(()=>document.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'));
+    return true;
+  }catch(e){ return false; }
+}
+
+async function syncNow(){
+  const b=$('#btn'); b.disabled=true; const old=b.textContent;
+  b.innerHTML='<span class="spin"></span> syncing';
+  try{ await fetch('/api/refresh',{method:'POST'}); }catch(e){}
+  // poll for the new batch
+  let tries=0;
+  const iv=setInterval(async()=>{
+    tries++; await loadStatus(); const ok=await loadNews();
+    if(tries>=20){ clearInterval(iv); b.disabled=false; b.textContent=old; }
+  },3000);
+  setTimeout(()=>{clearInterval(iv); b.disabled=false; b.textContent=old;}, 65000);
+}
+
+$('#btn').addEventListener('click', syncNow);
+
+async function boot(){
+  await loadStatus();
+  const ok = await loadNews();
+  if(!ok){ // wait for first startup sync
+    const iv=setInterval(async()=>{ await loadStatus(); if(await loadNews()) clearInterval(iv); },3000);
+  }
+}
+boot();
+setInterval(()=>{loadStatus();loadNews();}, 60000);  // gentle auto-refresh of the view
+</script>
+</body>
+</html>

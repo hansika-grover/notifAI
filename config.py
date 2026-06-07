@@ -118,3 +118,32 @@ NICHES = {
 # above: one strong keyword (0.6) clears it; one weak keyword alone (0.15) does
 # not. This is the main guard against fabricated connections.
 NICHE_MATCH_THRESHOLD = float(os.environ.get("NICHE_MATCH_THRESHOLD", "0.3"))
+
+
+# --- News sources (multi-source fetching) -----------------------------------
+# All RSS sources below are keyless and free. Toggle them with env vars.
+USE_GOOGLE_NEWS = os.environ.get("USE_GOOGLE_NEWS", "1") == "1"
+USE_PUBLISHER_RSS = os.environ.get("USE_PUBLISHER_RSS", "1") == "1"
+
+# Max items pulled per publisher feed per refresh (keeps memory tiny).
+MAX_PER_FEED = int(os.environ.get("MAX_PER_FEED", "15"))
+
+# Keyless publisher RSS feeds (verified live). Each entry: (url, source_name).
+# Publisher feeds are general finance/housing, so they're prefiltered to your
+# niche keywords before being added -- keeps the stored set on-topic and feeds
+# real cross-outlet corroboration into the virality "topic_heat" signal.
+# Add or remove freely; a dead feed is skipped without breaking the run.
+PUBLISHER_FEEDS = [
+    ("https://www.cnbc.com/id/10000115/device/rss/rss.html", "CNBC Real Estate"),
+    ("https://www.cnbc.com/id/10000664/device/rss/rss.html", "CNBC Finance"),
+    ("https://finance.yahoo.com/news/rssindex",              "Yahoo Finance"),
+    ("https://feeds.npr.org/1006/rss.xml",                   "NPR Business"),
+    ("https://www.housingwire.com/feed/",                    "HousingWire"),
+    ("https://www.insurancejournal.com/news/national/feed/", "Insurance Journal"),
+    ("https://www.investing.com/rss/news_285.rss",           "Investing.com"),
+]
+
+# Optional free-tier API. Leave blank to skip (default, and commercial-safe).
+# NOTE: verify the provider's license before commercial use -- several free
+# news-API tiers are development/non-commercial only.
+NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "").strip()

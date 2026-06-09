@@ -69,9 +69,10 @@ NICHES = {
             "home insurance", "homeowners insurance", "homeowner insurance",
             "property insurance", "flood insurance", "insurance premium",
             "insurance claim", "insurance rate", "home insurer", "policyholder",
+            "storm damage",
         ],
         "weak": ["insurance", "insurer", "premium", "deductible", "coverage",
-                 "storm damage", "hurricane", "wildfire"],
+                 "hurricane", "wildfire"],
     },
     "refinance": {
         "label": "Mortgage Refinance",
@@ -93,8 +94,9 @@ NICHES = {
         "label": "Roofing Services",
         "query": "roof repair OR roofing OR roof storm damage",
         "strong": ["roof", "roofing", "shingles", "roof repair",
-                   "roof replacement", "roofer", "leaking roof"],
-        "weak": ["hail damage", "storm damage", "hail", "attic"],
+                   "roof replacement", "roofer", "leaking roof",
+                   "storm damage", "hail damage"],
+        "weak": ["hail", "attic"],
     },
     "plumbing": {
         "label": "Plumbing Services",

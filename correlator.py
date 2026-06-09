@@ -22,9 +22,10 @@ import gemini_client
 
 
 def _word_present(kw: str, low: str) -> bool:
-    """Whole-word / phrase match so 'rate' doesn't fire inside 'accelerate'."""
-    return re.search(r"\b" + re.escape(kw) + r"\b", low) is not None
-
+    """Whole-word / phrase match, tolerant of a trailing plural (so
+    'home renovations' matches 'home renovation'). Still anchored on word
+    boundaries so 'rate' won't fire inside 'accelerate'."""
+    return re.search(r"\b" + re.escape(kw) + r"(?:e?s)?\b", low) is not None
 
 def _relevance(text: str, cfg: dict) -> tuple[float, list[str]]:
     """Grounded relevance: one specific (strong) phrase is enough; generic

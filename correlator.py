@@ -27,6 +27,7 @@ def _word_present(kw: str, low: str) -> bool:
     boundaries so 'rate' won't fire inside 'accelerate'."""
     return re.search(r"\b" + re.escape(kw) + r"(?:e?s)?\b", low) is not None
 
+
 def _relevance(text: str, cfg: dict) -> tuple[float, list[str]]:
     """Grounded relevance: one specific (strong) phrase is enough; generic
     (weak) words need company. Returns (score 0..1, matched keywords)."""
@@ -91,29 +92,29 @@ def _template_ad(article: dict, match: dict) -> dict:
     kws = match["matched_keywords"]
     topic = kws[0] if kws else label.lower()
     templates = {
-        "home_insurance": (
-            "Check Your Home Coverage Today",
-            "Storms, claims, or premium shifts in the news? Compare home insurance options built around your address.",
+        "insurance_finance": (
+            "Compare Your Options & Save",
+            "Insurance, loan, or credit news in the headlines? Compare options and find a better fit in minutes.",
         ),
-        "refinance": (
-            "Could a Refi Lower Your Payment?",
-            "When mortgage rates are in the headlines, see whether refinancing could fit your goals. Check options in minutes.",
+        "home_services": (
+            "Get a Local Pro on the Job",
+            "Home repair or upgrade in the news? Connect with a vetted local pro before small issues grow.",
         ),
-        "home_loans": (
-            "Find a Mortgage That Fits",
-            "Housing news moves fast. Compare loan options and get a clearer path to your next home.",
+        "health_supplements": (
+            "Support Your Health Goals",
+            "Health and wellness in the news? Explore options and talk to a professional about what fits you.",
         ),
-        "roofing": (
-            "Storm Damage? Book a Roof Check",
-            "If roof or storm news hits your area, schedule an inspection and fix small issues before they spread.",
+        "financial_publishing": (
+            "Sharpen Your Market Edge",
+            "Markets moving in the headlines? Get research and ideas to help you navigate your next move.",
         ),
-        "plumbing": (
-            "Leaks Move Fast. So Should You.",
-            "Pipe, drain, or water-heater trouble? Get a local plumber on the problem before damage grows.",
+        "education_career": (
+            "Train for Your Next Move",
+            "Career and skills news has you thinking? Explore programs and take the next step toward your goals.",
         ),
-        "bathroom": (
-            "Upgrade the Bathroom You Use Daily",
-            "Home-improvement news has you planning? Explore shower, vanity, and full bath remodel options.",
+        "b2b": (
+            "Tools to Run Your Business",
+            "Business tech in the headlines? Compare platforms and services built to streamline your operations.",
         ),
     }
     headline, desc = templates.get(

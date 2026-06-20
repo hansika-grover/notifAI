@@ -46,6 +46,7 @@ def init_db():
                 ad_headline     TEXT,
                 ad_description  TEXT,
                 ad_reason       TEXT,
+                creatives       TEXT,
                 is_top          INTEGER DEFAULT 0
             );
 
@@ -63,6 +64,9 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_articles_top   ON articles(is_top);
             """
         )
+        cols = [r["name"] for r in con.execute("PRAGMA table_info(articles)").fetchall()]
+        if "creatives" not in cols:
+            con.execute("ALTER TABLE articles ADD COLUMN creatives TEXT")
 
 
 def start_run(batch_id: str, started_at: str):
@@ -89,11 +93,11 @@ def upsert_article(a: dict):
             INSERT INTO articles
               (id,title,url,source,summary,published,fetched_at,batch_id,
                virality_score,virality_parts,niche,niche_label,niche_relevance,
-               ad_relevant,ad_headline,ad_description,ad_reason,is_top)
+               ad_relevant,ad_headline,ad_description,ad_reason,creatives,is_top)
             VALUES
               (:id,:title,:url,:source,:summary,:published,:fetched_at,:batch_id,
                :virality_score,:virality_parts,:niche,:niche_label,:niche_relevance,
-               :ad_relevant,:ad_headline,:ad_description,:ad_reason,:is_top)
+               :ad_relevant,:ad_headline,:ad_description,:ad_reason,:creatives,:is_top)
             ON CONFLICT(id) DO UPDATE SET
                title=excluded.title, summary=excluded.summary,
                fetched_at=excluded.fetched_at, batch_id=excluded.batch_id,
@@ -103,9 +107,10 @@ def upsert_article(a: dict):
                niche_relevance=excluded.niche_relevance,
                ad_relevant=excluded.ad_relevant, ad_headline=excluded.ad_headline,
                ad_description=excluded.ad_description, ad_reason=excluded.ad_reason,
-               is_top=excluded.is_top
+               creatives=excluded.creatives, is_top=excluded.is_top
             """,
-            {**a, "virality_parts": json.dumps(a.get("virality_parts", {}))},
+            {**a, "virality_parts": json.dumps(a.get("virality_parts", {})),
+             "creatives": json.dumps(a.get("creatives") or {})},
         )
 
 
@@ -149,4 +154,38 @@ def _row_to_dict(r: sqlite3.Row) -> dict:
         d["virality_parts"] = json.loads(d.get("virality_parts") or "{}")
     except json.JSONDecodeError:
         d["virality_parts"] = {}
+    try:
+        d["creatives"] = json.loads(d.get("creatives") or "{}")
+    except (json.JSONDecodeError, TypeError):
+        d["creatives"] = {}
     return d
+
+
+def get_by_niche(niche: str, limit=5):
+    """Top `limit` stories for one niche from the latest completed batch."""
+    with _conn() as con:
+        bid = latest_batch_id()
+        if not bid:
+            return []
+        rows = con.execute(
+            "SELECT * FROM articles WHERE batch_id=? AND niche=? "
+            "ORDER BY virality_score DESC LIMIT ?",
+            (bid, niche, limit),
+        ).fetchall()
+        return [_row_to_dict(r) for r in rows]
+
+
+def get_niche_list():
+    """Niches present in the latest batch, with story counts (for filter chips)."""
+    with _conn() as con:
+        bid = latest_batch_id()
+        if not bid:
+            return []
+        rows = con.execute(
+            "SELECT niche, niche_label, COUNT(*) c FROM articles "
+            "WHERE batch_id=? AND niche IS NOT NULL "
+            "GROUP BY niche, niche_label ORDER BY c DESC",
+            (bid,),
+        ).fetchall()
+        return [{"niche": r["niche"], "label": r["niche_label"], "count": r["c"]}
+                for r in rows]

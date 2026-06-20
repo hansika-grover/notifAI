@@ -55,9 +55,16 @@ app = FastAPI(title="Viral News -> Ads", lifespan=lifespan)
 
 
 @app.get("/api/top-news")
-def top_news():
-    return {"top": db.get_top(TOP_N), "count": TOP_N}
+def top_news(niche: str | None = None):
+    if niche and niche != "all":
+        return {"top": db.get_by_niche(niche, TOP_PER_NICHE),
+                "count": TOP_PER_NICHE, "niche": niche}
+    return {"top": db.get_top(TOP_N), "count": TOP_N, "niche": "all"}
 
+
+@app.get("/api/niches")
+def niches():
+    return {"niches": db.get_niche_list()}
 
 @app.get("/api/status")
 def status():

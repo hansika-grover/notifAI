@@ -45,6 +45,26 @@ def generate_json(prompt: str, timeout: int = 30) -> dict | None:
         return None
 
 
+def generate_text(prompt: str, timeout: int = 30) -> str | None:
+    """Plain-text Gemini call (scene prompts + video scripts). None on failure."""
+    if not GEMINI_API_KEY:
+        return None
+    try:
+        resp = requests.post(
+            GEMINI_ENDPOINT,
+            headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
+            json={"contents": [{"parts": [{"text": prompt}]}],
+                  "generationConfig": {"temperature": 0.8}},
+            timeout=timeout,
+        )
+        if resp.status_code != 200:
+            print(f"[gemini] HTTP {resp.status_code}: {resp.text[:200]}")
+            return None
+        return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+    except (requests.RequestException, KeyError, IndexError, ValueError) as e:
+        print(f"[gemini] text call failed: {e}")
+        return None
+    
 def _extract_json(text: str) -> dict | None:
     text = text.strip()
     if text.startswith("```"):

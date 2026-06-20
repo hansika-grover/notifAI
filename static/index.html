@@ -124,14 +124,22 @@
     border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
   footer{margin-top:40px;text-align:center;font-size:10.5px;color:var(--ink-faint);letter-spacing:.08em;line-height:1.8}
-
-/* ---- niche filters ---- */
+  /* ---- niche filters ---- */
   .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
-  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
     color:var(--ink-dim);background:var(--panel);border:1px solid var(--line);
     padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s;white-space:nowrap}
   .chip:hover{color:var(--ink);border-color:var(--ink-faint)}
   .chip.active{color:#0a0b0f;background:var(--ink);border-color:var(--ink);font-weight:600}
+  .chip .n{opacity:.55;margin-left:6px}
+  /* ---- creative panel ---- */
+  .creative{margin-top:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b0d13}
+  .cre-h{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding:10px 14px;border-bottom:1px solid var(--line)}
+  .cre-img{display:block;width:100%;max-width:340px;margin:14px auto;border-radius:10px;border:1px solid var(--line)}
+  .cre-vid{padding:0 14px 14px}
+  .cre-vid summary{cursor:pointer;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);padding:11px 0}
+  .cre-vid summary:hover{color:var(--ink)}
+  .cre-vid pre{white-space:pre-wrap;font-size:11.5px;line-height:1.6;color:var(--ink-dim);background:#0a0c12;border:1px dashed var(--line);border-radius:8px;padding:12px;margin-top:4px;font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -142,7 +150,7 @@
       <h1>Adfluence</h1>
       <span class="tag">virality desk · US</span>
     </div>
-    <p class="sub">Live news scored for virality, then matched to an ad niche — with grounded copy. Connections are only drawn when the keywords genuinely support them; nothing is invented.</p>
+    <p class="sub">Live news scored for virality, then matched to a home-services / home-finance ad niche — with grounded copy. Connections are only drawn when the keywords genuinely support them; nothing is invented.</p>
 
     <div class="status" id="status">
       <div class="stat"><span class="k">Last sync</span><span class="v" id="s-last">—</span></div>
@@ -170,7 +178,6 @@
 <script>
 const $ = s => document.querySelector(s);
 
-let CURRENT_STORIES = [];
 let NICHE_FILTER = 'all';
 
 // cool -> hot heat color for a 0..100 score
@@ -239,6 +246,14 @@ function card(a, i){
     adHtml = `<div class="nomatch"><b>No grounded niche match.</b> This story didn't clear the relevance bar for any ad niche, so no headline was generated — the connection would have been fabricated.</div>`;
   }
 
+  const cre = a.creatives || {};
+  let creativeHtml = '';
+  if(cre.image_path || cre.video_script){
+    const img = cre.image_path ? `<img class="cre-img" src="${cre.image_path}" alt="ad creative" loading="lazy">` : '';
+    const vid = cre.video_script ? `<details class="cre-vid"><summary>▸ Video ad script · 15s</summary><pre>${esc(cre.video_script)}</pre></details>` : '';
+    creativeHtml = `<div class="creative"><div class="cre-h">Creative — ad image + video script</div>${img}${vid}</div>`;
+  }
+
   return `
   <article class="card" style="animation-delay:${i*0.08}s">
     <div class="heatbar" style="background:${c};box-shadow:0 0 18px ${c}aa"></div>
@@ -254,6 +269,7 @@ function card(a, i){
         </div>
         <div class="parts"><div class="parts-in">${partsHtml}</div></div>
         ${adHtml}
+        ${creativeHtml}
       </div>
     </div>
   </article>`;
@@ -261,43 +277,36 @@ function card(a, i){
 
 function esc(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 
-function buildFilters(){
-  const wrap = $('#filters');
-  if(!wrap) return;
-  const labels = [...new Set(CURRENT_STORIES.filter(a=>a.niche_label).map(a=>a.niche_label))].sort();
-  const hasUnmatched = CURRENT_STORIES.some(a=>!a.niche_label);
-  const chips = ['all', ...labels];
-  if(hasUnmatched) chips.push('No match');
-  wrap.innerHTML = chips.map(c=>{
-    const label = c==='all' ? 'All' : c;
-    return `<button class="chip${c===NICHE_FILTER?' active':''}" data-f="${esc(c)}">${esc(label)}</button>`;
-  }).join('');
-  wrap.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{
-    NICHE_FILTER = b.dataset.f; buildFilters(); renderStories();
-  }));
-}
-
-function renderStories(){
-  const grid = $('#grid');
-  let list = CURRENT_STORIES;
-  if(NICHE_FILTER==='No match') list = CURRENT_STORIES.filter(a=>!a.niche_label);
-  else if(NICHE_FILTER!=='all') list = CURRENT_STORIES.filter(a=>a.niche_label===NICHE_FILTER);
-  if(!list.length){ grid.innerHTML = `<div class="empty">No stories in this niche right now.</div>`; return; }
-  grid.innerHTML = list.map((a,i)=>card(a,i)).join('');
-  requestAnimationFrame(()=>document.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'));
+async function loadNiches(){
+  try{
+    const wrap = $('#filters'); if(!wrap) return;
+    const d = await (await fetch('/api/niches')).json();
+    const chips = [{niche:'all', label:'All', count:null}, ...(d.niches||[])];
+    wrap.innerHTML = chips.map(c=>{
+      const n = c.count!=null ? `<span class="n">${c.count}</span>` : '';
+      return `<button class="chip${c.niche===NICHE_FILTER?' active':''}" data-f="${esc(c.niche)}">${esc(c.label)}${n}</button>`;
+    }).join('');
+    wrap.querySelectorAll('.chip').forEach(b=>b.addEventListener('click', async ()=>{
+      NICHE_FILTER = b.dataset.f;
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active', x===b));
+      await loadNews();
+    }));
+  }catch(e){}
 }
 
 async function loadNews(){
   try{
-    const d = await (await fetch('/api/top-news')).json();
+    const q = (NICHE_FILTER && NICHE_FILTER!=='all') ? ('?niche='+encodeURIComponent(NICHE_FILTER)) : '';
+    const d = await (await fetch('/api/top-news'+q)).json();
+    const grid = $('#grid');
     if(!d.top || !d.top.length){
-      $('#grid').innerHTML = `<div class="empty"><span class="spin"></span> First sync in progress — fetching & scoring live news…</div>`;
-      if($('#filters')) $('#filters').innerHTML='';
+      grid.innerHTML = NICHE_FILTER==='all'
+        ? `<div class="empty"><span class="spin"></span> First sync in progress — fetching & scoring live news…</div>`
+        : `<div class="empty">No stories in this niche right now.</div>`;
       return false;
     }
-    CURRENT_STORIES = d.top;
-    buildFilters();
-    renderStories();
+    grid.innerHTML = d.top.map((a,i)=>card(a,i)).join('');
+    requestAnimationFrame(()=>document.querySelectorAll('.fill').forEach(f=>f.style.width=f.dataset.w+'%'));
     return true;
   }catch(e){ return false; }
 }
@@ -309,7 +318,7 @@ async function syncNow(){
   // poll for the new batch
   let tries=0;
   const iv=setInterval(async()=>{
-    tries++; await loadStatus(); const ok=await loadNews();
+    tries++; await loadStatus(); await loadNiches(); const ok=await loadNews();
     if(tries>=20){ clearInterval(iv); b.disabled=false; b.textContent=old; }
   },3000);
   setTimeout(()=>{clearInterval(iv); b.disabled=false; b.textContent=old;}, 65000);
@@ -319,13 +328,14 @@ $('#btn').addEventListener('click', syncNow);
 
 async function boot(){
   await loadStatus();
+  await loadNiches();
   const ok = await loadNews();
-  if(!ok){ // wait for first startup sync
-    const iv=setInterval(async()=>{ await loadStatus(); if(await loadNews()) clearInterval(iv); },3000);
+  if(!ok && NICHE_FILTER==='all'){ // wait for first startup sync
+    const iv=setInterval(async()=>{ await loadStatus(); await loadNiches(); if(await loadNews()) clearInterval(iv); },3000);
   }
 }
 boot();
-setInterval(()=>{loadStatus();loadNews();}, 60000);  // gentle auto-refresh of the view
+setInterval(()=>{loadStatus();loadNiches();loadNews();}, 60000);  // gentle auto-refresh
 </script>
 </body>
 </html>

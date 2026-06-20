@@ -56,6 +56,12 @@ GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     f"{GEMINI_MODEL}:generateContent"
 )
+# --- Creatives / image rendering --------------------------------------------
+IMAGE_RENDER = os.environ.get("IMAGE_RENDER", "none")          # none | cloudflare
+MAX_IMAGES_PER_SYNC = int(os.environ.get("MAX_IMAGES_PER_SYNC", "5"))
+CREATIVES_DIR = os.environ.get("CREATIVES_DIR", str(BASE_DIR / "static" / "creatives"))
+AD_ACCENT = os.environ.get("AD_ACCENT", "#FF5D3B")             # headline/CTA accent
+
 
 # --- Ad niches --------------------------------------------------------------
 # Each niche: a Google-News query + two keyword tiers used to GROUND the

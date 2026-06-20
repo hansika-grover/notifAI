@@ -6,10 +6,11 @@ The pipeline: fetch -> score virality -> pick top N -> correlate to niche
 from datetime import datetime, timezone
 
 import db
-from config import TOP_N
+from config import TOP_N, MAX_IMAGES_PER_SYNC, IMAGE_RENDER
 from news_fetcher import fetch_all
 from virality import score_batch
-from correlator import correlate
+from correlator import correlate, match_niche, _template_ad
+from creatives import make_creatives
 
 import re
 from difflib import SequenceMatcher
@@ -52,27 +53,42 @@ def run_pipeline() -> dict:
 
         # 2. score virality (transparent heuristic)
         articles = score_batch(articles)
-
-        # 3. rank, take the top N of this batch
         articles.sort(key=lambda a: a["virality_score"], reverse=True)
-        top = _pick_diverse_top(articles, TOP_N)
 
-        # 4. correlate ONLY the top stories to a niche + write ad copy
-        #    (keeps Gemini calls tiny -> well within the free tier)
+        # 3. niche-match EVERY article (free, lexical) so each niche has a pool.
+        #    Matched stories get FREE template copy -- no API calls here.
+        for a in articles:
+            m = match_niche(a)
+            a["niche"] = m["niche"]
+            a["niche_label"] = m["niche_label"]
+            a["niche_relevance"] = m["niche_relevance"]
+            if m["niche"]:
+                a.update(_template_ad(a, m))
+            else:
+                a.update({"ad_relevant": 0, "ad_headline": None,
+                          "ad_description": None, "ad_reason": ""})
+
+        # 4. upgrade ONLY the global diverse top to Gemini copy (bounded -> free tier)
+        top = _pick_diverse_top(articles, TOP_N)
         for a in top:
             correlate(a)
 
-        # 5. persist everything; flag the current top N
+        # 4b. build creatives (in-context image + video script) for the top.
+        #     Image render is capped by MAX_IMAGES_PER_SYNC; scripts are always made.
+        rendered = 0
+        for a in top:
+            if not a.get("niche"):
+                continue  # no niche match -> no ad creative
+            allow = IMAGE_RENDER != "none" and rendered < MAX_IMAGES_PER_SYNC
+            m = {"niche": a.get("niche"), "niche_label": a.get("niche_label")}
+            a["creatives"] = make_creatives(a, m, allow_render=allow)
+            if a["creatives"].get("image_path"):
+                rendered += 1
+
+        # 5. persist everything; flag the current global top
         db.clear_top_flags()
         top_ids = {a["id"] for a in top}
         for a in articles:
-            a.setdefault("niche", None)
-            a.setdefault("niche_label", None)
-            a.setdefault("niche_relevance", 0.0)
-            a.setdefault("ad_relevant", 0)
-            a.setdefault("ad_headline", None)
-            a.setdefault("ad_description", None)
-            a.setdefault("ad_reason", "")
             a["batch_id"] = batch_id
             a["is_top"] = 1 if a["id"] in top_ids else 0
             db.upsert_article(a)

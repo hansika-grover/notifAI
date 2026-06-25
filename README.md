@@ -1,4 +1,4 @@
-# Adfluence
+# NotifAI
 
 Turn live US news into ad creatives a media buying team can actually test.
 
@@ -7,7 +7,7 @@ Turn live US news into ad creatives a media buying team can actually test.
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 ![Status](https://img.shields.io/badge/status-active-3be0a0)
 
-Adfluence pulls breaking US news every few hours, scores each story for virality, matches the strongest ones to ad niches like insurance, lending, home services, and health, and then generates the ad copy, a ready-to-test image, and a short video script for each. The whole thing runs on free tools and shows up in a live dashboard.
+NotifAI pulls breaking US news every few hours, scores each story for virality, matches the strongest ones to ad niches like insurance, lending, home services, and health, and then generates the ad copy, a ready-to-test image, and a short video script for each. The whole thing runs on free tools and shows up in a live dashboard.
 
 The point is simple: give the team a faster, news-driven starting point for creative, with a human still reviewing before anything goes live.
 
@@ -59,7 +59,7 @@ Stories are grouped into six broad verticals, each backed by a keyword model:
 ## Project structure
 
 ```
-adfluence/
+NotifAI/
 ├── app.py            # FastAPI server + scheduler + API routes
 ├── pipeline.py       # fetch -> score -> match -> copy -> creatives -> store
 ├── news_fetcher.py   # multi-source RSS fetching
@@ -76,8 +76,8 @@ adfluence/
 ## Setup
 
 ```bash
-git clone https://github.com/hansika-grover/adfluence
-cd adfluence
+git clone https://github.com/hansika-grover/NotifAI
+cd NotifAI
 pip install -r requirements.txt
 cp .env.example .env     # add your keys (optional, see below)
 python app.py
@@ -104,7 +104,7 @@ Everything lives in `.env` (copy it from `.env.example`):
 
 - Images need Cloudflare (free, no credit card). Without it you still get the copy, the image prompt, and the video script, just no rendered picture.
 - The virality score is a transparent heuristic, not a trained model. It is meant to rank, not predict exact reach.
-- Some niches (health, finance, legal) are heavily regulated. Adfluence keeps copy grounded, but everything should get human review before it runs as an ad.
+- Some niches (health, finance, legal) are heavily regulated. NotifAI keeps copy grounded, but everything should get human review before it runs as an ad.
 
 ## License
 

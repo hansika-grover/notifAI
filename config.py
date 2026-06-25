@@ -1,5 +1,5 @@
 """
-Central configuration for the Adfluence pipeline.
+Central configuration for the NotifAI pipeline.
 
 Everything tunable lives here so you don't have to dig through the code.
 Secrets (the Gemini key) come from a .env file or your environment.

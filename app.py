@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Viral News -> Ads", lifespan=lifespan)
+app = FastAPI(title="NotifAI", lifespan=lifespan)
 
 
 @app.get("/api/top-news")

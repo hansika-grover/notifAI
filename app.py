@@ -21,7 +21,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 import db
 import gemini_client
-from config import BASE_DIR, TOP_N, REFRESH_HOURS, NEWS_SCOPE, GEMINI_MODEL
+from config import BASE_DIR, TOP_N, TOP_PER_NICHE, REFRESH_HOURS, NEWS_SCOPE, GEMINI_MODELfrom pipeline import run_pipeline
 from pipeline import run_pipeline
 
 scheduler = BackgroundScheduler(timezone="UTC")

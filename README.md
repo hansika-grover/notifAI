@@ -7,6 +7,8 @@ Turn live US news into ad creatives a media buying team can actually test.
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 ![Status](https://img.shields.io/badge/status-active-3be0a0)
 
+**Live demo:** [notifai-hyrq.onrender.com](https://notifai-hyrq.onrender.com/)
+
 NotifAI pulls breaking US news every few hours, scores each story for virality, matches the strongest ones to ad niches like insurance, lending, home services, and health, and then generates the ad copy, a ready-to-test image, and a short video script for each. The whole thing runs on free tools and shows up in a live dashboard.
 
 The point is simple: give the team a faster, news-driven starting point for creative, with a human still reviewing before anything goes live.
